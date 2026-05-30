@@ -19,18 +19,10 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.name }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: macOS Intel
-            runner: macos-13
-            target: x86_64-apple-darwin
-          - name: macOS Apple Silicon
-            runner: macos-14
-            target: aarch64-apple-darwin
+    name: Build macOS Apple Silicon
+    runs-on: macos-14
+    env:
+      MACOS_TARGET: aarch64-apple-darwin
 
     steps:
       - name: Checkout
@@ -50,7 +42,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ env.MACOS_TARGET }}
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
@@ -60,14 +52,14 @@ jobs:
           APPLE_SIGNING_IDENTITY: "-"
         run: >
           pnpm tauri build
-          --target ${{ matrix.target }}
+          --target ${{ env.MACOS_TARGET }}
           --config '{"bundle":{"createUpdaterArtifacts":false,"macOS":{"signingIdentity":null}}}'
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kaka-ai-client-${{ matrix.target }}
+          name: kaka-ai-client-${{ env.MACOS_TARGET }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/target/${{ env.MACOS_TARGET }}/release/bundle/macos/*.app
+            src-tauri/target/${{ env.MACOS_TARGET }}/release/bundle/dmg/*.dmg
           if-no-files-found: error
